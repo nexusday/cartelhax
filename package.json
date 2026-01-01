@@ -1,0 +1,16 @@
+{
+  "name": "cartel-hax",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Cartel Hax auth portal with Node backend and Firebase Realtime Database",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

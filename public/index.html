@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cartel Hax · Acceso</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="auth-wrapper">
+      <div class="form-card">
+        <header class="auth-heading">
+          <span class="logo">Cartel Hax</span>
+          <p class="tagline">Accede a la plataforma.</p>
+        </header>
+        <div class="form-toggle">
+          <button class="toggle-btn active" data-target="login">Iniciar sesión</button>
+          <button class="toggle-btn" data-target="register">Crear cuenta</button>
+        </div>
+        <form id="login-form" class="auth-form" autocomplete="off">
+          <h1>Bienvenido de vuelta</h1>
+          <p class="form-caption">Ingresa con tu usuario, correo y contraseña.</p>
+          <label class="input-field">
+            <span>Usuario</span>
+            <input type="text" name="username" required minlength="3" />
+          </label>
+          <label class="input-field">
+            <span>Correo</span>
+            <input type="email" name="email" required />
+          </label>
+          <label class="input-field">
+            <span>Contraseña</span>
+            <input type="password" name="password" required minlength="6" />
+          </label>
+          <button type="submit" class="primary-btn">Entrar</button>
+          <p class="alt-action">
+            ¿Aún no tienes cuenta?
+            <a href="#" data-target="register" class="link-toggle">Regístrate</a>
+          </p>
+        </form>
+        <form id="register-form" class="auth-form hidden" autocomplete="off">
+          <h1>Crear cuenta</h1>
+          <p class="form-caption">
+            Define tus credenciales para ingresar a Cartel Hax.
+          </p>
+          <label class="input-field">
+            <span>Usuario</span>
+            <input type="text" name="username" required minlength="3" />
+          </label>
+          <label class="input-field">
+            <span>Correo</span>
+            <input type="email" name="email" required />
+          </label>
+          <label class="input-field">
+            <span>Contraseña</span>
+            <input type="password" name="password" required minlength="6" />
+          </label>
+          <button type="submit" class="primary-btn">Registrar</button>
+          <p class="alt-action">
+            ¿Ya tienes cuenta?
+            <a href="#" data-target="login" class="link-toggle">Inicia sesión</a>
+          </p>
+        </form>
+        <div class="form-status" role="status" aria-live="polite"></div>
+      </div>
+      <footer class="auth-footer">
+        <span>© <span id="current-year"></span> Cartel Hax</span>
+      </footer>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

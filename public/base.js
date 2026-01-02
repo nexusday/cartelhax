@@ -8,6 +8,10 @@ import {
   ref,
   set,
   get,
+  remove,
+  push,
+  onValue,
+  update,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -35,4 +39,4 @@ isAnalyticsSupported()
     
   });
 
-export { app, db, analytics, ref, set, get };
+export { app, db, analytics, ref, set, get, remove, push, onValue, update };

@@ -1,6 +1,10 @@
 import { db, ref, get, set } from "./base.js";
-
-const SESSION_COOKIE = "cartelhax_session";
+import {
+  setSessionCookie,
+  getSessionCookie,
+  ROLE_ORDER,
+  normalizeRole,
+} from "./session.js";
 
 const loginForm = document.getElementById("login-form");
 const registerForm = document.getElementById("register-form");
@@ -15,7 +19,7 @@ if (yearNode) {
 
 const activeSession = getSessionCookie();
 if (activeSession) {
-  window.location.replace("cartelhax.html");
+  window.location.replace("cartelhax/");
 }
 
 const forms = {
@@ -88,9 +92,14 @@ loginForm?.addEventListener("submit", async (event) => {
 
     setStatus("Acceso concedido. Redirigiendo...", "success");
     loginForm.reset();
-    setSessionCookie({ username, email });
+    setSessionCookie({
+      username,
+      email: userData.email,
+      role: normalizeRole(userData.role),
+      userKey: usernameKey,
+    });
     setTimeout(() => {
-      window.location.href = "cartelhax.html";
+      window.location.href = "cartelhax/";
     }, 1200);
   } catch (error) {
     console.error(error);
@@ -141,12 +150,14 @@ registerForm?.addEventListener("submit", async (event) => {
 
     const passwordHash = await hashPassword(password);
     const now = Date.now();
+    const role = ROLE_ORDER[0];
 
     await Promise.all([
       set(userRef, {
         username,
         email,
         passwordHash,
+        role,
         createdAt: now,
       }),
       set(emailRef, {
@@ -222,28 +233,4 @@ function prefillLogin({ username, email, password }) {
   if (passwordField) {
     passwordField.value = password;
   }
-}
-
-function setSessionCookie(data) {
-  try {
-    const encoded = btoa(JSON.stringify(data));
-    document.cookie = `${SESSION_COOKIE}=${encoded}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax`;
-  } catch (error) {
-    console.error("setSessionCookie error", error);
-  }
-}
-
-function getSessionCookie() {
-  const cookies = document.cookie.split(";").map((item) => item.trim());
-  for (const cookie of cookies) {
-    if (!cookie.startsWith(`${SESSION_COOKIE}=`)) continue;
-    const value = cookie.substring(SESSION_COOKIE.length + 1);
-    try {
-      return JSON.parse(atob(value));
-    } catch (error) {
-      console.error("getSessionCookie error", error);
-      return null;
-    }
-  }
-  return null;
 }

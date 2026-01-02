@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cartel Hax · Inicio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: radial-gradient(circle at top, #131726 0%, #06070d 60%, #010103 100%);
+        --panel: rgba(14, 18, 28, 0.78);
+        --card: rgba(18, 23, 36, 0.78);
+        --accent: #37ffc0;
+        --text: #f7f9ff;
+        --muted: rgba(247, 249, 255, 0.65);
+        --border: rgba(255, 255, 255, 0.08);
+        --danger: #ff6578;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 48px 20px;
+        background: var(--bg);
+        font-family: "Urbanist", "Segoe UI", sans-serif;
+        color: var(--text);
+      }
+      main.shell {
+        width: min(1060px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        backdrop-filter: blur(22px);
+        padding: 42px;
+        display: grid;
+        gap: 36px;
+      }
+      .top-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+      }
+      .brand {
+        display: grid;
+        gap: 4px;
+      }
+      .brand h1 {
+        margin: 0;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        font-size: 1.6rem;
+      }
+      .brand span {
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      button {
+        border: 1px solid transparent;
+        border-radius: 14px;
+        padding: 12px 22px;
+        font: 600 0.95rem "Urbanist", sans-serif;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .link-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(247, 249, 255, 0.28);
+        background: rgba(20, 25, 38, 0.88);
+        color: var(--text);
+        font: 600 0.85rem "Urbanist", sans-serif;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      }
+      .link-button:hover {
+        transform: translateY(-1px);
+        border-color: var(--accent);
+        background: rgba(55, 255, 192, 0.12);
+      }
+      .primary {
+        background: var(--accent);
+        color: #010203;
+        box-shadow: 0 18px 36px rgba(55, 255, 192, 0.24);
+      }
+      .secondary {
+        background: transparent;
+        color: var(--text);
+        border-color: rgba(247, 249, 255, 0.28);
+      }
+      button:hover {
+        transform: translateY(-1px);
+      }
+      section.links {
+        display: grid;
+        gap: 22px;
+      }
+      .links-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .links-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+      .links-header span {
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+      .links-grid {
+        display: grid;
+        gap: 18px;
+      }
+      .link-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px 22px;
+        display: grid;
+        gap: 12px;
+      }
+      .link-card header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .link-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .role-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(55, 255, 192, 0.12);
+        border: 1px solid rgba(55, 255, 192, 0.32);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .link-card .link-button {
+        margin-top: 4px;
+        width: fit-content;
+        align-self: flex-start;
+      }
+      .empty-state {
+        color: var(--muted);
+        text-align: center;
+        border: 1px dashed var(--border);
+        border-radius: 18px;
+        padding: 28px 20px;
+      }
+      .status {
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+      .status.error {
+        color: var(--danger);
+      }
+      @media (max-width: 720px) {
+        main.shell {
+          padding: 28px;
+        }
+        .top-bar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .links-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="top-bar">
+        <div class="brand">
+          <h1>Cartel Hax</h1>
+          <span id="welcome-copy">Cargando perfil...</span>
+        </div>
+        <div class="actions">
+          <button class="primary" id="btn-admin" hidden>Panel admin</button>
+          <button class="secondary" id="btn-logout">Cerrar sesión</button>
+        </div>
+      </header>
+
+      <section class="links">
+        <div class="links-header">
+          <div>
+            <h2>Enlaces disponibles</h2>
+            <span id="links-summary">Conectando con la base...</span>
+          </div>
+        </div>
+        <div id="links-status" class="status"></div>
+        <div id="links-grid" class="links-grid"></div>
+      </section>
+    </main>
+    <script type="module" src="./dashboard.js"></script>
+  </body>
+</html>

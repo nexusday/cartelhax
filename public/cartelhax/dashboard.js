@@ -111,12 +111,24 @@ function renderLinks(totalCount, visibleLinks) {
     linksSummary.textContent = `Ves ${visibleLinks.length} de ${totalCount} enlaces disponibles.`;
   }
 
+  if (!linksGrid) return;
   linksGrid.innerHTML = "";
 
   if (visibleLinks.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "Aún no tienes enlaces para tu rango. Si crees que es un error, contacta al administrador.";
+
+    const emptyText = document.createElement("p");
+    emptyText.textContent = "Aún no tienes enlaces para tu rango. Si crees que es un error, contacta al administrador.";
+
+    const supportButton = document.createElement("a");
+    supportButton.className = "link-button";
+    supportButton.href = "https://wa.me/51926872056?text=Quiero%20que%20me%20ayudes%20en%20la%20p%C3%A1gina%20web%20CARTEL%20HAX";
+    supportButton.target = "_blank";
+    supportButton.rel = "noopener noreferrer";
+    supportButton.textContent = "Soporte";
+
+    empty.append(emptyText, supportButton);
     linksGrid.appendChild(empty);
     return;
   }

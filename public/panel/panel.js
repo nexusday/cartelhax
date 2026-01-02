@@ -1,7 +1,7 @@
 import { db, ref, onValue, update, set, remove } from "../base.js";
 import { ROLE_ORDER, normalizeRole } from "../session.js";
 
-const PANEL_PASSWORD = "cartel";
+const PANEL_PASSWORD = "cartelpanelv2";
 const PANEL_UNLOCK_KEY = "cartelhax_panel_unlock";
 
 const gateSection = document.getElementById("panel-gate");

@@ -42,7 +42,7 @@ backBtn?.addEventListener("click", () => {
   window.location.replace("../");
 });
 
-// Users listener
+
 const usersRef = ref(db, "users");
 onValue(
   usersRef,
@@ -141,7 +141,7 @@ async function resetUserLinks(userKey) {
   }
 }
 
-// Links form
+
 linksForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   linksFormStatus.textContent = "Guardando...";
@@ -178,7 +178,7 @@ linksForm?.addEventListener("submit", async (event) => {
   }
 });
 
-// Links listener
+
 const linksRef = ref(db, "links");
 onValue(
   linksRef,

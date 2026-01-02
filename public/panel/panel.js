@@ -152,9 +152,56 @@ function initializePanel() {
     ROLE_ORDER.forEach((role) => {
       const option = document.createElement("option");
       option.value = role;
-      option.textContent = role.toUpperCase();
+      option.textContent = role === 'miembro' ? 'TODOS' : role.toUpperCase();
       minRoleSelect.appendChild(option);
     });
+    
+    
+    const infoNote = document.createElement('div');
+    infoNote.className = 'role-info';
+    infoNote.style.marginTop = '12px';
+    infoNote.style.padding = '10px';
+    infoNote.style.borderRadius = '8px';
+    infoNote.style.background = 'rgba(0, 0, 0, 0.1)';
+    infoNote.style.fontSize = '0.85em';
+    infoNote.style.color = 'var(--muted)';
+    
+    const title = document.createElement('div');
+    title.textContent = 'INFORMACIÓN DE RANGOS';
+    title.style.fontWeight = 'bold';
+    title.style.marginBottom = '8px';
+    title.style.color = 'var(--primary)';
+    
+    const rolesList = document.createElement('div');
+    rolesList.style.display = 'grid';
+    rolesList.style.gap = '4px';
+    
+    const roleInfo = {
+      'miembro': 'APARECE A TODOS LOS RANGOS',
+      'premium': 'ACCESO EXCLUSIVO PARA USUARIOS PREMIUM',
+      'vip': 'ACCESO EXCLUSIVO PARA USUARIOS VIP',
+      'diamantes': 'SOLO PARA RANGO DIAMANTES'
+    };
+    
+    ROLE_ORDER.forEach(role => {
+      const roleDiv = document.createElement('div');
+      roleDiv.style.display = 'flex';
+      roleDiv.style.gap = '8px';
+      
+      const roleName = document.createElement('span');
+      roleName.textContent = role === 'miembro' ? 'TODOS' : role.toUpperCase();
+      roleName.style.fontWeight = '600';
+      roleName.style.minWidth = '80px';
+      
+      const roleDesc = document.createElement('span');
+      roleDesc.textContent = roleInfo[role];
+      
+      roleDiv.append(roleName, roleDesc);
+      rolesList.appendChild(roleDiv);
+    });
+    
+    infoNote.append(title, rolesList);
+    minRoleSelect.parentNode.insertBefore(infoNote, minRoleSelect.nextSibling);
   }
 
   if (!linksFormBound && linksForm) {
@@ -257,7 +304,7 @@ function renderUsers(users) {
       ROLE_ORDER.forEach((role) => {
         const option = document.createElement("option");
         option.value = role;
-        option.textContent = role.toUpperCase();
+        option.textContent = role === 'miembro' ? 'TODOS' : role.toUpperCase();
         if (role === user.role) option.selected = true;
         roleSelect.appendChild(option);
       });

@@ -41,16 +41,23 @@ function clearSessionCookie() {
 
 function normalizeRole(role) {
   if (!role) return ROLE_ORDER[0];
-  const normalized = role.toString().trim().toLowerCase();
-  return ROLE_ORDER.includes(normalized) ? normalized : ROLE_ORDER[0];
+  return role.toString().trim().toLowerCase();
 }
 
 function roleRank(role) {
-  return ROLE_ORDER.indexOf(normalizeRole(role));
+  const normalized = normalizeRole(role);
+  return ROLE_ORDER.includes(normalized) ? ROLE_ORDER.indexOf(normalized) : -1;
 }
 
 function canAccess(userRole, minRole) {
-  return roleRank(userRole) >= roleRank(minRole);
+  const target = normalizeRole(minRole);
+  const user = normalizeRole(userRole);
+  const targetRank = roleRank(target);
+  const userRank = roleRank(user);
+  if (targetRank !== -1) {
+    return userRank !== -1 && userRank >= targetRank;
+  }
+  return user === target;
 }
 
 export {

@@ -62,10 +62,9 @@ loginForm?.addEventListener("submit", async (event) => {
 
   const formData = new FormData(loginForm);
   const username = formData.get("username")?.toString().trim() ?? "";
-  const email = formData.get("email")?.toString().trim().toLowerCase() ?? "";
   const password = formData.get("password")?.toString() ?? "";
 
-  if (!username || !email || !password) {
+  if (!username || !password) {
     setStatus("Completa todos los campos.", "error");
     disableForm(loginForm, false);
     return;
@@ -85,7 +84,7 @@ loginForm?.addEventListener("submit", async (event) => {
     const userData = userSnapshot.val();
     const passwordHash = await hashPassword(password);
 
-    if (userData.email?.toLowerCase() !== email || userData.passwordHash !== passwordHash) {
+    if (userData.passwordHash !== passwordHash) {
       setStatus("Credenciales inválidas.", "error");
       return;
     }

@@ -386,6 +386,32 @@
         </div>
       </section>
 
+      <section class="block" id="custom-roles-block">
+        <div>
+          <h2>Rangos personalizados</h2>
+          <p class="desc">Crea nuevos rangos y úsalos en usuarios y enlaces.</p>
+        </div>
+        <form id="custom-role-form" class="inline-grid">
+          <div class="form-grid">
+            <label class="field">
+              <span>Nombre del rango</span>
+              <input type="text" name="roleName" required minlength="3" placeholder="ADMINS, STAFF, SOPORTE" />
+            </label>
+          </div>
+          <div class="controls">
+            <button type="submit" class="primary" id="btn-create-role">Crear rango</button>
+            <div id="custom-role-status" class="status"></div>
+          </div>
+        </form>
+        <div class="links-header">
+          <div>
+            <h2>Rangos creados</h2>
+            <p class="desc" id="custom-roles-count">Sin rangos personalizados.</p>
+          </div>
+        </div>
+        <div id="custom-roles-list" class="links-grid"></div>
+      </section>
+
       <section class="block" id="links-block">
         <div>
           <h2>Publicar enlace</h2>
@@ -404,6 +430,13 @@
             <label class="field">
               <span>Rango mínimo</span>
               <select name="minRole" class="role-select"></select>
+            </label>
+            <label class="field">
+              <span>Estado</span>
+              <select name="status">
+                <option value="online" selected>Online</option>
+                <option value="offline">Offline</option>
+              </select>
             </label>
           </div>
           <div class="controls">

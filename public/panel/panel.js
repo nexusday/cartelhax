@@ -18,21 +18,166 @@ const linksCount = document.getElementById("links-count");
 const logoutBtn = document.getElementById("btn-logout");
 const backBtn = document.getElementById("btn-back");
 const minRoleSelect = linksForm?.querySelector("select[name='minRole']");
+const customRoleForm = document.getElementById("custom-role-form");
+const customRoleStatus = document.getElementById("custom-role-status");
+const customRolesList = document.getElementById("custom-roles-list");
+const customRolesCount = document.getElementById("custom-roles-count");
 
 let linksFormBound = false;
 let panelInitialized = false;
 let unsubscribeUsers = null;
 let unsubscribeLinks = null;
+let unsubscribeCustomRoles = null;
+let customRoles = [];
+let currentUsers = [];
 
 gateForm?.addEventListener("submit", handleGateSubmit);
 logoutBtn?.addEventListener("click", () => {
   lockPanel();
-  const passwordField = gateForm?.querySelector("input[name='password']");
-  if (passwordField) {
-    passwordField.value = "";
-    passwordField.focus();
-  }
 });
+
+async function handleCustomRoleSubmit(event) {
+  event.preventDefault();
+  if (!customRoleForm) return;
+
+  if (customRoleStatus) {
+    customRoleStatus.textContent = "Guardando...";
+    customRoleStatus.classList.remove("error");
+  }
+
+  const formData = new FormData(customRoleForm);
+  const roleNameRaw = formData.get("roleName")?.toString().trim() ?? "";
+  const normalized = normalizeRole(roleNameRaw);
+
+  if (!roleNameRaw || !normalized) {
+    if (customRoleStatus) {
+      customRoleStatus.textContent = "Ingresa un nombre válido.";
+      customRoleStatus.classList.add("error");
+    }
+    return;
+  }
+
+  if (ROLE_ORDER.includes(normalized)) {
+    if (customRoleStatus) {
+      customRoleStatus.textContent = "Ese rango ya existe como predeterminado.";
+      customRoleStatus.classList.add("error");
+    }
+    return;
+  }
+
+  if (customRoles.some((r) => r.value === normalized)) {
+    if (customRoleStatus) {
+      customRoleStatus.textContent = "Ese rango personalizado ya existe.";
+      customRoleStatus.classList.add("error");
+    }
+    return;
+  }
+
+  const roleId = normalized.replace(/[^a-z0-9_-]+/g, "-") || crypto.randomUUID();
+
+  try {
+    await set(ref(db, `customRoles/${roleId}`), {
+      name: roleNameRaw,
+      value: normalized,
+      createdAt: Date.now(),
+    });
+    customRoleForm.reset();
+    if (customRoleStatus) {
+      customRoleStatus.textContent = "Rango creado.";
+      customRoleStatus.classList.remove("error");
+    }
+  } catch (error) {
+    console.error("createCustomRole", error);
+    if (customRoleStatus) {
+      customRoleStatus.textContent = "No se pudo crear el rango.";
+      customRoleStatus.classList.add("error");
+    }
+  }
+}
+
+function renderCustomRoles() {
+  if (!customRolesList) return;
+  customRolesList.innerHTML = "";
+
+  if (customRoles.length === 0) {
+    if (customRolesCount) {
+      customRolesCount.textContent = "Sin rangos personalizados.";
+    }
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "Crea un rango personalizado para usarlo en enlaces y usuarios.";
+    customRolesList.appendChild(empty);
+    return;
+  }
+
+  if (customRolesCount) {
+    customRolesCount.textContent = `${customRoles.length} rangos personalizados.`;
+  }
+
+  customRoles
+    .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+    .forEach((role) => {
+      const card = document.createElement("article");
+      card.className = "link-card";
+
+      const header = document.createElement("header");
+      const title = document.createElement("h3");
+      title.textContent = role.name?.toUpperCase() ?? role.value.toUpperCase();
+      const badge = document.createElement("span");
+      badge.className = "role-badge";
+      badge.textContent = "PERSONALIZADO";
+      header.append(title, badge);
+
+      const meta = document.createElement("p");
+      meta.className = "status";
+      meta.textContent = `ID: ${role.value}`;
+
+      const actions = document.createElement("div");
+      actions.className = "controls";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Eliminar";
+      deleteBtn.className = "danger";
+      deleteBtn.addEventListener("click", () => deleteCustomRole(role.key));
+
+      actions.appendChild(deleteBtn);
+
+      card.append(header, meta, actions);
+      customRolesList.appendChild(card);
+    });
+}
+
+async function deleteCustomRole(roleKey) {
+  if (!roleKey) return;
+  try {
+    await remove(ref(db, `customRoles/${roleKey}`));
+    if (customRoleStatus) {
+      customRoleStatus.textContent = "Rango eliminado.";
+      customRoleStatus.classList.remove("error");
+    }
+  } catch (error) {
+    console.error("deleteCustomRole", error);
+    if (customRoleStatus) {
+      customRoleStatus.textContent = "No se pudo eliminar el rango.";
+      customRoleStatus.classList.add("error");
+    }
+  }
+}
+
+function rebuildMinRoleSelect() {
+  if (!minRoleSelect) return;
+  const currentValue = minRoleSelect.value;
+  minRoleSelect.innerHTML = "";
+  getRoleOptions().forEach((role) => {
+    const option = document.createElement("option");
+    option.value = role.value;
+    option.textContent = role.label;
+    minRoleSelect.appendChild(option);
+  });
+  if (currentValue) {
+    minRoleSelect.value = currentValue;
+  }
+}
 backBtn?.addEventListener("click", () => {
   window.location.replace("/cartelhax/");
 });
@@ -96,6 +241,7 @@ function unlockPanel() {
 
   subscribeUsers();
   subscribeLinks();
+  subscribeCustomRoles();
 }
 
 function lockPanel() {
@@ -136,6 +282,10 @@ function lockPanel() {
     unsubscribeLinks();
     unsubscribeLinks = null;
   }
+  if (unsubscribeCustomRoles) {
+    unsubscribeCustomRoles();
+    unsubscribeCustomRoles = null;
+  }
   if (usersTable) {
     usersTable.innerHTML = "";
   }
@@ -149,57 +299,51 @@ function lockPanel() {
 
 function initializePanel() {
   if (minRoleSelect && minRoleSelect.childElementCount === 0) {
-    ROLE_ORDER.forEach((role) => {
-      const option = document.createElement("option");
-      option.value = role;
-      option.textContent = role === 'miembro' ? 'TODOS' : role.toUpperCase();
-      minRoleSelect.appendChild(option);
-    });
-    
-    
-    const infoNote = document.createElement('div');
-    infoNote.className = 'role-info';
-    infoNote.style.marginTop = '12px';
-    infoNote.style.padding = '10px';
-    infoNote.style.borderRadius = '8px';
-    infoNote.style.background = 'rgba(0, 0, 0, 0.1)';
-    infoNote.style.fontSize = '0.85em';
-    infoNote.style.color = 'var(--muted)';
-    
-    const title = document.createElement('div');
-    title.textContent = 'INFORMACIÓN DE RANGOS';
-    title.style.fontWeight = 'bold';
-    title.style.marginBottom = '8px';
-    title.style.color = 'var(--primary)';
-    
-    const rolesList = document.createElement('div');
-    rolesList.style.display = 'grid';
-    rolesList.style.gap = '4px';
-    
+    rebuildMinRoleSelect();
+
+    const infoNote = document.createElement("div");
+    infoNote.className = "role-info";
+    infoNote.style.marginTop = "12px";
+    infoNote.style.padding = "10px";
+    infoNote.style.borderRadius = "8px";
+    infoNote.style.background = "rgba(0, 0, 0, 0.1)";
+    infoNote.style.fontSize = "0.85em";
+    infoNote.style.color = "var(--muted)";
+
+    const title = document.createElement("div");
+    title.textContent = "INFORMACIÓN DE RANGOS";
+    title.style.fontWeight = "bold";
+    title.style.marginBottom = "8px";
+    title.style.color = "var(--primary)";
+
+    const rolesList = document.createElement("div");
+    rolesList.style.display = "grid";
+    rolesList.style.gap = "4px";
+
     const roleInfo = {
-      'miembro': 'APARECE A TODOS LOS RANGOS',
-      'premium': 'ACCESO EXCLUSIVO PARA USUARIOS PREMIUM',
-      'vip': 'ACCESO EXCLUSIVO PARA USUARIOS VIP',
-      'diamantes': 'SOLO PARA RANGO DIAMANTES'
+      miembro: "APARECE A TODOS LOS RANGOS",
+      premium: "ACCESO EXCLUSIVO PARA USUARIOS PREMIUM",
+      vip: "ACCESO EXCLUSIVO PARA USUARIOS VIP",
+      diamantes: "SOLO PARA RANGO DIAMANTES",
     };
-    
-    ROLE_ORDER.forEach(role => {
-      const roleDiv = document.createElement('div');
-      roleDiv.style.display = 'flex';
-      roleDiv.style.gap = '8px';
-      
-      const roleName = document.createElement('span');
-      roleName.textContent = role === 'miembro' ? 'TODOS' : role.toUpperCase();
-      roleName.style.fontWeight = '600';
-      roleName.style.minWidth = '80px';
-      
-      const roleDesc = document.createElement('span');
+
+    ROLE_ORDER.forEach((role) => {
+      const roleDiv = document.createElement("div");
+      roleDiv.style.display = "flex";
+      roleDiv.style.gap = "8px";
+
+      const roleName = document.createElement("span");
+      roleName.textContent = role === "miembro" ? "TODOS" : role.toUpperCase();
+      roleName.style.fontWeight = "600";
+      roleName.style.minWidth = "80px";
+
+      const roleDesc = document.createElement("span");
       roleDesc.textContent = roleInfo[role];
-      
+
       roleDiv.append(roleName, roleDesc);
       rolesList.appendChild(roleDiv);
     });
-    
+
     infoNote.append(title, rolesList);
     minRoleSelect.parentNode.insertBefore(infoNote, minRoleSelect.nextSibling);
   }
@@ -208,6 +352,8 @@ function initializePanel() {
     linksForm.addEventListener("submit", handleLinkSubmit);
     linksFormBound = true;
   }
+
+  customRoleForm?.addEventListener("submit", handleCustomRoleSubmit);
 }
 
 function subscribeUsers() {
@@ -232,6 +378,7 @@ function subscribeUsers() {
         role: normalizeRole(value.role),
         createdAt: value.createdAt ?? 0,
       }));
+      currentUsers = entries;
       renderUsers(entries);
     },
     (error) => {
@@ -262,6 +409,7 @@ function subscribeLinks() {
         minRole: normalizeRole(value.minRole),
         createdAt: value.createdAt ?? 0,
         createdBy: value.createdBy ?? "panel",
+        status: value.status === "offline" ? "offline" : "online",
       }));
       renderLinks(entries);
     },
@@ -270,6 +418,37 @@ function subscribeLinks() {
       if (linksFormStatus) {
         linksFormStatus.textContent = "No se pudieron cargar los enlaces.";
         linksFormStatus.classList.add("error");
+      }
+    }
+  );
+}
+
+function subscribeCustomRoles() {
+  if (!customRolesList) return;
+  if (unsubscribeCustomRoles) {
+    unsubscribeCustomRoles();
+  }
+
+  const customRolesRef = ref(db, "customRoles");
+  unsubscribeCustomRoles = onValue(
+    customRolesRef,
+    (snapshot) => {
+      const data = snapshot.val() ?? {};
+      customRoles = Object.entries(data).map(([key, value]) => ({
+        key,
+        name: value.name ?? value.value ?? key,
+        value: normalizeRole(value.value ?? key),
+        createdAt: value.createdAt ?? 0,
+      }));
+      renderCustomRoles();
+      rebuildMinRoleSelect();
+      renderUsers(currentUsers);
+    },
+    (error) => {
+      console.error("customRoles listener", error);
+      if (customRoleStatus) {
+        customRoleStatus.textContent = "No se pudieron cargar los rangos personalizados.";
+        customRoleStatus.classList.add("error");
       }
     }
   );
@@ -301,11 +480,11 @@ function renderUsers(users) {
 
       const roleCell = document.createElement("td");
       const roleSelect = document.createElement("select");
-      ROLE_ORDER.forEach((role) => {
+      getRoleOptions().forEach((roleOption) => {
         const option = document.createElement("option");
-        option.value = role;
-        option.textContent = role === 'miembro' ? 'TODOS' : role.toUpperCase();
-        if (role === user.role) option.selected = true;
+        option.value = roleOption.value;
+        option.textContent = roleOption.label;
+        if (roleOption.value === user.role) option.selected = true;
         roleSelect.appendChild(option);
       });
       roleSelect.className = "role-select";
@@ -358,6 +537,20 @@ async function resetUserLinks(userKey) {
   }
 }
 
+function getRoleOptions() {
+  const base = ROLE_ORDER.map((role) => ({
+    value: role,
+    label: role === "miembro" ? "TODOS" : role.toUpperCase(),
+    isCustom: false,
+  }));
+  const customs = customRoles.map((role) => ({
+    value: role.value,
+    label: role.name?.toUpperCase() ?? role.value.toUpperCase(),
+    isCustom: true,
+  }));
+  return [...base, ...customs];
+}
+
 function handleLinkSubmit(event) {
   event.preventDefault();
   if (!linksForm) return;
@@ -371,6 +564,7 @@ function handleLinkSubmit(event) {
   const name = formData.get("name")?.toString().trim() ?? "";
   const url = formData.get("url")?.toString().trim() ?? "";
   const minRole = formData.get("minRole")?.toString() ?? ROLE_ORDER[0];
+  const status = formData.get("status")?.toString() ?? "online";
 
   if (!name || !url) {
     if (linksFormStatus) {
@@ -384,6 +578,7 @@ function handleLinkSubmit(event) {
     name,
     url,
     minRole: normalizeRole(minRole),
+    status: status === "offline" ? "offline" : "online",
   });
 }
 
@@ -393,6 +588,7 @@ async function createLink(linkData) {
       ...linkData,
       createdAt: Date.now(),
       createdBy: "panel_admin",
+      status: linkData.status ?? "online",
     });
     if (linksForm) {
       linksForm.reset();
@@ -443,6 +639,12 @@ function renderLinks(links) {
       badge.textContent = link.minRole.toUpperCase();
       header.append(title, badge);
 
+      const statusBadge = document.createElement("span");
+      statusBadge.className = "role-badge";
+      statusBadge.style.background = link.status === "offline" ? "var(--danger)" : "var(--primary)";
+      statusBadge.textContent = link.status === "offline" ? "OFFLINE" : "ONLINE";
+      header.appendChild(statusBadge);
+
       const urlButton = document.createElement("a");
       urlButton.href = link.url;
       urlButton.target = "_blank";
@@ -458,12 +660,23 @@ function renderLinks(links) {
       const actions = document.createElement("div");
       actions.className = "controls";
 
+      const statusSelect = document.createElement("select");
+      ["online", "offline"].forEach((state) => {
+        const option = document.createElement("option");
+        option.value = state;
+        option.textContent = state.toUpperCase();
+        if (state === link.status) option.selected = true;
+        statusSelect.appendChild(option);
+      });
+      statusSelect.className = "role-select";
+      statusSelect.addEventListener("change", () => updateLinkStatus(link.key, statusSelect.value));
+
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "Eliminar";
       deleteBtn.className = "danger";
       deleteBtn.addEventListener("click", () => deleteLink(link.key));
 
-      actions.appendChild(deleteBtn);
+      actions.append(statusSelect, deleteBtn);
 
       card.append(header, urlButton, meta, actions);
       linksList.appendChild(card);
@@ -481,6 +694,22 @@ async function deleteLink(linkKey) {
     console.error("deleteLink", error);
     if (linksFormStatus) {
       linksFormStatus.textContent = "No se pudo eliminar el enlace.";
+      linksFormStatus.classList.add("error");
+    }
+  }
+}
+
+async function updateLinkStatus(linkKey, status) {
+  try {
+    await update(ref(db, `links/${linkKey}`), { status: status === "offline" ? "offline" : "online" });
+    if (linksFormStatus) {
+      linksFormStatus.textContent = "Estado actualizado.";
+      linksFormStatus.classList.remove("error");
+    }
+  } catch (error) {
+    console.error("updateLinkStatus", error);
+    if (linksFormStatus) {
+      linksFormStatus.textContent = "No se pudo actualizar el estado.";
       linksFormStatus.classList.add("error");
     }
   }

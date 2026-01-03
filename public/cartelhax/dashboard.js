@@ -7,6 +7,7 @@ import {
   roleRank,
   ROLE_ORDER,
   normalizeRole,
+  canAccess,
 } from "../session.js";
 
 let session = getSessionCookie();
@@ -77,6 +78,7 @@ onValue(
       url: value.url ?? "#",
       minRole: value.minRole ? normalizeRole(value.minRole) : ROLE_ORDER[0],
       createdAt: value.createdAt ?? 0,
+      status: value.status === "offline" ? "offline" : "online",
     }));
 
     refreshLinks();
@@ -94,10 +96,7 @@ function renderSessionInfo() {
 }
 
 function refreshLinks() {
-  const visibleLinks = allLinks.filter((entry) => {
-    if (entry.minRole === ROLE_ORDER[0]) return true;
-    return session.role === entry.minRole;
-  });
+  const visibleLinks = allLinks.filter((entry) => canAccess(session.role, entry.minRole));
   renderLinks(allLinks.length, visibleLinks);
 }
 
@@ -145,16 +144,29 @@ function renderLinks(totalCount, visibleLinks) {
       const badge = document.createElement("span");
       badge.className = "role-badge";
       badge.textContent = `Rango mínimo: ${link.minRole.toUpperCase()}`;
-      header.append(title, badge);
+      const statusBadge = document.createElement("span");
+      statusBadge.className = "role-badge";
+      statusBadge.style.background = link.status === "offline" ? "var(--danger)" : "var(--primary)";
+      statusBadge.textContent = link.status === "offline" ? "OFFLINE" : "ONLINE";
+      header.append(title, badge, statusBadge);
+
+      const meta = document.createElement("p");
+      meta.className = "status";
+      const createdAt = link.createdAt ? new Date(link.createdAt).toLocaleString() : "fecha desconocida";
+      meta.textContent = `Publicado: ${createdAt}`;
 
       const button = document.createElement("a");
-      button.href = link.url;
+      button.href = link.status === "offline" ? "#" : link.url;
       button.target = "_blank";
       button.rel = "noopener noreferrer";
-      button.textContent = "Entrar";
+      button.textContent = link.status === "offline" ? "Offline" : "Entrar";
       button.className = "link-button";
+      if (link.status === "offline") {
+        button.style.opacity = "0.6";
+        button.style.pointerEvents = "none";
+      }
 
-      card.append(header, button);
+      card.append(header, meta, button);
       linksGrid.appendChild(card);
     });
 }

@@ -1,4 +1,4 @@
-import { db, ref, onValue, update, set, remove } from "../base.js";
+import { db, ref, onValue, update, set, remove, get } from "../base.js";
 import { ROLE_ORDER, normalizeRole, normalizeRoles } from "../session.js";
 
 const PANEL_PASSWORD = "cartelpanelv2";
@@ -671,6 +671,7 @@ function renderLinks(links) {
     .forEach((link) => {
       const card = document.createElement("article");
       card.className = "link-card";
+      card.setAttribute('data-link-id', link.key);
 
       const header = document.createElement("header");
       const title = document.createElement("h3");
@@ -716,12 +717,18 @@ function renderLinks(links) {
       statusSelect.className = "role-select";
       statusSelect.addEventListener("change", () => updateLinkStatus(link.key, statusSelect.value));
 
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Editar";
+      editBtn.className = "secondary";
+      editBtn.style.marginRight = "8px";
+      editBtn.addEventListener("click", () => showEditForm(link));
+
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "Eliminar";
       deleteBtn.className = "danger";
       deleteBtn.addEventListener("click", () => deleteLink(link.key));
 
-      actions.append(statusSelect, deleteBtn);
+      actions.append(statusSelect, editBtn, deleteBtn);
 
       card.append(header, description, urlButton, meta, actions);
       linksList.appendChild(card);
@@ -746,16 +753,144 @@ async function deleteLink(linkKey) {
 
 async function updateLinkStatus(linkKey, status) {
   try {
-    await update(ref(db, `links/${linkKey}`), { status: status === "offline" ? "offline" : "online" });
-    if (linksFormStatus) {
-      linksFormStatus.textContent = "Estado actualizado.";
-      linksFormStatus.classList.remove("error");
-    }
+    await update(ref(db, `links/${linkKey}`), { status });
   } catch (error) {
     console.error("updateLinkStatus", error);
     if (linksFormStatus) {
       linksFormStatus.textContent = "No se pudo actualizar el estado.";
       linksFormStatus.classList.add("error");
     }
+  }
+}
+
+function showEditForm(link) {
+  const formContainer = document.createElement('div');
+  formContainer.className = 'edit-form';
+  formContainer.style.marginTop = '16px';
+  formContainer.style.padding = '16px';
+  formContainer.style.border = '1px solid var(--border)';
+  formContainer.style.borderRadius = '8px';
+  formContainer.style.backgroundColor = 'var(--panel)';
+
+  const form = document.createElement('form');
+  form.className = 'link-form';
+  
+  const nameGroup = document.createElement('div');
+  nameGroup.style.marginBottom = '12px';
+  const nameLabel = document.createElement('label');
+  nameLabel.textContent = 'Nombre del enlace';
+  nameLabel.style.display = 'block';
+  nameLabel.style.marginBottom = '4px';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.name = 'edit-name';
+  nameInput.value = link.name;
+  nameInput.required = true;
+  nameInput.style.width = '100%';
+  nameGroup.append(nameLabel, nameInput);
+
+  
+  const urlGroup = document.createElement('div');
+  urlGroup.style.marginBottom = '12px';
+  const urlLabel = document.createElement('label');
+  urlLabel.textContent = 'URL';
+  urlLabel.style.display = 'block';
+  urlLabel.style.marginBottom = '4px';
+  const urlInput = document.createElement('input');
+  urlInput.type = 'url';
+  urlInput.name = 'edit-url';
+  urlInput.value = link.url;
+  urlInput.required = true;
+  urlInput.style.width = '100%';
+  urlGroup.append(urlLabel, urlInput);
+
+  
+  const descGroup = document.createElement('div');
+  descGroup.style.marginBottom = '12px';
+  const descLabel = document.createElement('label');
+  descLabel.textContent = 'Descripción';
+  descLabel.style.display = 'block';
+  descLabel.style.marginBottom = '4px';
+  const descInput = document.createElement('textarea');
+  descInput.name = 'edit-description';
+  descInput.value = link.description || '';
+  descInput.style.width = '100%';
+  descInput.style.minHeight = '80px';
+  descGroup.append(descLabel, descInput);
+
+  
+  const roleGroup = document.createElement('div');
+  roleGroup.style.marginBottom = '16px';
+  const roleLabel = document.createElement('label');
+  roleLabel.textContent = 'Rango mínimo';
+  roleLabel.style.display = 'block';
+  roleLabel.style.marginBottom = '4px';
+  const roleSelect = document.createElement('select');
+  roleSelect.name = 'edit-minRole';
+  roleSelect.style.width = '100%';
+  
+  
+  const roleOptions = getRoleOptions();
+  roleOptions.forEach(roleOption => {
+    const option = document.createElement('option');
+    option.value = roleOption.value;
+    option.textContent = roleOption.label;
+    if (roleOption.value === link.minRole) option.selected = true;
+    roleSelect.appendChild(option);
+  });
+  roleGroup.append(roleLabel, roleSelect);
+
+  
+  const buttonGroup = document.createElement('div');
+  buttonGroup.style.display = 'flex';
+  const buttonStyle = 'padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px;';
+  
+  const saveButton = document.createElement('button');
+  saveButton.type = 'submit';
+  saveButton.textContent = 'Guardar';
+  saveButton.style = buttonStyle + 'background: var(--primary); color: white;';
+  
+  const cancelButton = document.createElement('button');
+  cancelButton.type = 'button';
+  cancelButton.textContent = 'Cancelar';
+  cancelButton.style = buttonStyle + 'background: var(--border);';
+  cancelButton.addEventListener('click', () => formContainer.remove());
+  
+  buttonGroup.append(saveButton, cancelButton);
+
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const updates = {
+      name: nameInput.value.trim(),
+      url: urlInput.value.trim(),
+      description: descInput.value.trim(),
+      minRole: roleSelect.value,
+      updatedAt: Date.now()
+    };
+
+    try {
+      await update(ref(db, `links/${link.key}`), updates);
+      formContainer.remove();
+    } catch (error) {
+      console.error('Error al actualizar el enlace:', error);
+      alert('No se pudo actualizar el enlace. Intenta de nuevo.');
+    }
+  });
+
+  
+  form.append(nameGroup, urlGroup, descGroup, roleGroup, buttonGroup);
+  formContainer.appendChild(form);
+  
+  
+  const card = document.querySelector(`[data-link-id="${link.key}"]`);
+  if (card) {
+    
+    const existingForm = card.querySelector('.edit-form');
+    if (existingForm) existingForm.remove();
+    
+    card.appendChild(formContainer);
+    nameInput.focus();
   }
 }

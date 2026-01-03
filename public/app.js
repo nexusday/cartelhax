@@ -220,18 +220,66 @@ async function hashPassword(value) {
 }
 
 function prefillLogin({ username, email, password }) {
-  if (!loginForm) return;
-  const usernameField = loginForm.querySelector('input[name="username"]');
-  const emailField = loginForm.querySelector('input[name="email"]');
-  const passwordField = loginForm.querySelector('input[name="password"]');
-
-  if (usernameField) {
-    usernameField.value = username;
-  }
-  if (emailField) {
-    emailField.value = email;
-  }
-  if (passwordField) {
-    passwordField.value = password;
+  if (username) loginForm.querySelector('input[name="username"]').value = username;
+  if (email) registerForm.querySelector('input[name="email"]').value = email;
+  if (password) {
+    const passwordInput = loginForm.querySelector('input[name="password"]');
+    passwordInput.value = password;
+    passwordInput.focus();
   }
 }
+
+// Función para inicializar el botón de mostrar/ocultar contraseña
+function initPasswordToggle() {
+  // Primero, eliminar cualquier listener existente para evitar duplicados
+  document.querySelectorAll('.toggle-password').forEach(button => {
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+  });
+
+  // Luego, agregar los nuevos listeners
+  document.querySelectorAll('.toggle-password').forEach(button => {
+    button.addEventListener('click', function() {
+      // Encontrar el campo de contraseña que está justo antes del botón
+      const passwordField = this.parentElement.querySelector('.password-field');
+      if (!passwordField) return;
+      
+      const isPassword = passwordField.type === 'password';
+      
+      // Cambiar el tipo de input
+      passwordField.type = isPassword ? 'text' : 'password';
+      
+      // Actualizar el estado visual
+      const container = this.closest('.password-input');
+      if (isPassword) {
+        container.classList.add('password-visible');
+      } else {
+        container.classList.remove('password-visible');
+      }
+      
+      // Enfocar el campo de contraseña después de cambiar el tipo
+      passwordField.focus();
+    });
+  });
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+  initPasswordToggle();
+  
+  // También inicializar después de cambiar entre formularios
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        if (!mutation.target.classList.contains('hidden')) {
+          initPasswordToggle();
+        }
+      }
+    });
+  });
+
+  // Observar cambios en los formularios
+  document.querySelectorAll('.auth-form').forEach(form => {
+    observer.observe(form, { attributes: true });
+  });
+});

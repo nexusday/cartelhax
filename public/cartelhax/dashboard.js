@@ -94,8 +94,19 @@ onValue(
 );
 
 function renderSessionInfo() {
-  const roleLabel = session.role ? session.role.toUpperCase() : "MIEMBRO";
-  welcomeCopy.textContent = `Bienvenido, ${session.username} · ${roleLabel}`;
+  
+  const userRoles = Array.from(new Set([
+    ...(session.roles || []),
+    ...(session.role ? [session.role] : ['miembro'])
+  ]));
+  
+  
+  const roleLabels = userRoles
+    .filter(role => role) 
+    .map(role => role.toUpperCase())
+    .join(' · ');
+    
+  welcomeCopy.textContent = `Bienvenido, ${session.username} · ${roleLabels || 'MIEMBRO'}`;
 }
 
 function refreshLinks() {

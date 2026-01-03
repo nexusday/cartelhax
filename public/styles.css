@@ -227,3 +227,61 @@ main.auth-wrapper {
     align-items: flex-start;
   }
 }
+
+
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input input[type="password"],
+.password-input input[type="text"] {
+  padding-right: 40px;
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+}
+
+.toggle-password:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-password:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  color: var(--accent);
+}
+
+.toggle-password .eye-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* Estilo para el estado de contraseña visible */
+.password-visible .toggle-password {
+  color: var(--accent);
+}
+
+
+.input-field input {
+  width: 100%;
+}

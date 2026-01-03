@@ -77,6 +77,7 @@ onValue(
     allLinks = Object.entries(data).map(([id, value]) => ({
       id,
       name: value.name ?? "Sin nombre",
+      description: value.description ?? "",
       url: value.url ?? "#",
       minRole: value.minRole ? normalizeRole(value.minRole) : ROLE_ORDER[0],
       createdAt: value.createdAt ?? 0,
@@ -154,6 +155,14 @@ function renderLinks(totalCount, visibleLinks) {
       statusBadge.textContent = link.status === "offline" ? "OFFLINE" : "ONLINE";
       header.append(title, badge, statusBadge);
 
+      const description = document.createElement("p");
+      description.className = "link-description";
+      description.textContent = link.description || "Sin descripción";
+      description.style.margin = "8px 0";
+      description.style.color = "var(--muted)";
+      description.style.fontSize = "0.95em";
+      description.style.lineHeight = "1.4";
+
       const meta = document.createElement("p");
       meta.className = "status";
       const createdAt = link.createdAt ? new Date(link.createdAt).toLocaleString() : "fecha desconocida";
@@ -170,7 +179,7 @@ function renderLinks(totalCount, visibleLinks) {
         button.style.pointerEvents = "none";
       }
 
-      card.append(header, meta, button);
+      card.append(header, description, meta, button);
       linksGrid.appendChild(card);
     });
 }

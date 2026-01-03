@@ -4,6 +4,7 @@ import {
   getSessionCookie,
   ROLE_ORDER,
   normalizeRole,
+  normalizeRoles,
 } from "./session.js";
 
 const loginForm = document.getElementById("login-form");
@@ -95,6 +96,7 @@ loginForm?.addEventListener("submit", async (event) => {
       username,
       email: userData.email,
       role: normalizeRole(userData.role),
+      roles: normalizeRoles(userData.roles?.length ? userData.roles : [userData.role]),
       userKey: usernameKey,
     });
     setTimeout(() => {

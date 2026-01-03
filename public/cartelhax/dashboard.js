@@ -52,10 +52,12 @@ onValue(
     }
 
     const data = snapshot.val();
+    const roles = data.roles?.length ? data.roles : data.role ? [data.role] : [];
     session = {
       username: data.username ?? session.username,
       email: data.email ?? session.email,
       role: normalizeRole(data.role),
+      roles,
       userKey,
     };
     setSessionCookie(session);
@@ -96,7 +98,9 @@ function renderSessionInfo() {
 }
 
 function refreshLinks() {
-  const visibleLinks = allLinks.filter((entry) => canAccess(session.role, entry.minRole));
+  const visibleLinks = allLinks.filter((entry) =>
+    canAccess(session.roles?.length ? session.roles : session.role, entry.minRole)
+  );
   renderLinks(allLinks.length, visibleLinks);
 }
 
@@ -159,7 +163,7 @@ function renderLinks(totalCount, visibleLinks) {
       button.href = link.status === "offline" ? "#" : link.url;
       button.target = "_blank";
       button.rel = "noopener noreferrer";
-      button.textContent = link.status === "offline" ? "Offline" : "Entrar";
+      button.textContent = link.status === "offline" ? "Offline" : "Descargar";
       button.className = "link-button";
       if (link.status === "offline") {
         button.style.opacity = "0.6";

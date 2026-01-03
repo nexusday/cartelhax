@@ -1,5 +1,5 @@
 import { db, ref, onValue, update, set, remove } from "../base.js";
-import { ROLE_ORDER, normalizeRole } from "../session.js";
+import { ROLE_ORDER, normalizeRole, normalizeRoles } from "../session.js";
 
 const PANEL_PASSWORD = "cartelpanelv2";
 const PANEL_UNLOCK_KEY = "cartelhax_panel_unlock";
@@ -376,6 +376,7 @@ function subscribeUsers() {
         username: value.username,
         email: value.email,
         role: normalizeRole(value.role),
+        roles: normalizeRoles(value.roles?.length ? value.roles : value.role ? [value.role] : []),
         createdAt: value.createdAt ?? 0,
       }));
       currentUsers = entries;
@@ -405,6 +406,7 @@ function subscribeLinks() {
       const entries = Object.entries(data).map(([key, value]) => ({
         key,
         name: value.name ?? "Sin nombre",
+        description: value.description ?? "",
         url: value.url ?? "#",
         minRole: normalizeRole(value.minRole),
         createdAt: value.createdAt ?? 0,
@@ -479,17 +481,50 @@ function renderUsers(users) {
       emailCell.textContent = user.email;
 
       const roleCell = document.createElement("td");
-      const roleSelect = document.createElement("select");
+      const chipContainer = document.createElement("div");
+      chipContainer.className = "role-chips";
+
+      const currentRoles = user.roles?.length ? user.roles : user.role ? [user.role] : [];
+      currentRoles.forEach((roleValue) => {
+        const chip = document.createElement("span");
+        chip.className = "role-chip";
+        chip.textContent = roleValue.toUpperCase();
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "remove";
+        removeBtn.type = "button";
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", () => {
+          const updated = currentRoles.filter((r) => r !== roleValue);
+          updateUserRoles(user.key, updated);
+        });
+        chip.appendChild(removeBtn);
+        chipContainer.appendChild(chip);
+      });
+
+      const addSelect = document.createElement("select");
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Agregar rol…";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      addSelect.appendChild(placeholder);
+
       getRoleOptions().forEach((roleOption) => {
+        if (currentRoles.includes(roleOption.value)) return;
         const option = document.createElement("option");
         option.value = roleOption.value;
         option.textContent = roleOption.label;
-        if (roleOption.value === user.role) option.selected = true;
-        roleSelect.appendChild(option);
+        addSelect.appendChild(option);
       });
-      roleSelect.className = "role-select";
-      roleSelect.addEventListener("change", () => updateUserRole(user.key, roleSelect.value));
-      roleCell.appendChild(roleSelect);
+      addSelect.className = "role-select";
+      addSelect.addEventListener("change", () => {
+        const value = addSelect.value;
+        if (!value) return;
+        const updated = Array.from(new Set([...currentRoles, value]));
+        updateUserRoles(user.key, updated);
+      });
+
+      roleCell.append(chipContainer, addSelect);
 
       const actionsCell = document.createElement("td");
       const resetLinkBtn = document.createElement("button");
@@ -504,17 +539,21 @@ function renderUsers(users) {
     });
 }
 
-async function updateUserRole(userKey, role) {
+async function updateUserRoles(userKey, roles) {
   try {
-    await update(ref(db, `users/${userKey}`), { role: normalizeRole(role) });
+    const normalizedRoles = normalizeRoles(roles);
+    await update(ref(db, `users/${userKey}`), {
+      role: normalizedRoles[0] ?? ROLE_ORDER[0],
+      roles: normalizedRoles,
+    });
     if (usersStatus) {
-      usersStatus.textContent = "Rol actualizado.";
+      usersStatus.textContent = "Roles actualizados.";
       usersStatus.classList.remove("error");
     }
   } catch (error) {
-    console.error("updateUserRole", error);
+    console.error("updateUserRoles", error);
     if (usersStatus) {
-      usersStatus.textContent = "No se pudo actualizar el rol.";
+      usersStatus.textContent = "No se pudieron actualizar los roles.";
       usersStatus.classList.add("error");
     }
   }
@@ -562,11 +601,12 @@ function handleLinkSubmit(event) {
 
   const formData = new FormData(linksForm);
   const name = formData.get("name")?.toString().trim() ?? "";
+  const description = formData.get("description")?.toString().trim() ?? "";
   const url = formData.get("url")?.toString().trim() ?? "";
   const minRole = formData.get("minRole")?.toString() ?? ROLE_ORDER[0];
   const status = formData.get("status")?.toString() ?? "online";
 
-  if (!name || !url) {
+  if (!name || !description || !url) {
     if (linksFormStatus) {
       linksFormStatus.textContent = "Completa todos los campos.";
       linksFormStatus.classList.add("error");
@@ -576,6 +616,7 @@ function handleLinkSubmit(event) {
 
   createLink({
     name,
+    description,
     url,
     minRole: normalizeRole(minRole),
     status: status === "offline" ? "offline" : "online",
@@ -649,13 +690,17 @@ function renderLinks(links) {
       urlButton.href = link.url;
       urlButton.target = "_blank";
       urlButton.rel = "noopener noreferrer";
-      urlButton.textContent = "Entrar";
+      urlButton.textContent = "Descargar";
       urlButton.className = "link-button";
 
       const meta = document.createElement("p");
       meta.className = "status";
       const createdAt = link.createdAt ? new Date(link.createdAt).toLocaleString() : "fecha desconocida";
       meta.textContent = `Publicado por ${link.createdBy} · ${createdAt}`;
+
+      const description = document.createElement("p");
+      description.className = "status";
+      description.textContent = link.description || "Sin descripción.";
 
       const actions = document.createElement("div");
       actions.className = "controls";
@@ -678,7 +723,7 @@ function renderLinks(links) {
 
       actions.append(statusSelect, deleteBtn);
 
-      card.append(header, urlButton, meta, actions);
+      card.append(header, description, urlButton, meta, actions);
       linksList.appendChild(card);
     });
 }

@@ -44,20 +44,36 @@ function normalizeRole(role) {
   return role.toString().trim().toLowerCase();
 }
 
+function normalizeRoles(input) {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return Array.from(
+      new Set(
+        input
+          .map((r) => normalizeRole(r))
+          .filter(Boolean)
+      )
+    );
+  }
+  return [normalizeRole(input)];
+}
+
 function roleRank(role) {
   const normalized = normalizeRole(role);
   return ROLE_ORDER.includes(normalized) ? ROLE_ORDER.indexOf(normalized) : -1;
 }
 
 function canAccess(userRole, minRole) {
+  const userRoles = normalizeRoles(userRole);
   const target = normalizeRole(minRole);
-  const user = normalizeRole(userRole);
   const targetRank = roleRank(target);
-  const userRank = roleRank(user);
   if (targetRank !== -1) {
-    return userRank !== -1 && userRank >= targetRank;
+    return userRoles.some((r) => {
+      const rank = roleRank(r);
+      return rank !== -1 && rank >= targetRank;
+    });
   }
-  return user === target;
+  return userRoles.includes(target);
 }
 
 export {
@@ -70,4 +86,5 @@ export {
   canAccess,
   roleRank,
   normalizeRole,
+  normalizeRoles,
 };

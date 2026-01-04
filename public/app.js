@@ -229,27 +229,26 @@ function prefillLogin({ username, email, password }) {
   }
 }
 
-// Función para inicializar el botón de mostrar/ocultar contraseña
 function initPasswordToggle() {
-  // Primero, eliminar cualquier listener existente para evitar duplicados
+
   document.querySelectorAll('.toggle-password').forEach(button => {
     const newButton = button.cloneNode(true);
     button.parentNode.replaceChild(newButton, button);
   });
 
-  // Luego, agregar los nuevos listeners
+  
   document.querySelectorAll('.toggle-password').forEach(button => {
     button.addEventListener('click', function() {
-      // Encontrar el campo de contraseña que está justo antes del botón
+      
       const passwordField = this.parentElement.querySelector('.password-field');
       if (!passwordField) return;
       
       const isPassword = passwordField.type === 'password';
       
-      // Cambiar el tipo de input
+      
       passwordField.type = isPassword ? 'text' : 'password';
       
-      // Actualizar el estado visual
+      
       const container = this.closest('.password-input');
       if (isPassword) {
         container.classList.add('password-visible');
@@ -257,17 +256,17 @@ function initPasswordToggle() {
         container.classList.remove('password-visible');
       }
       
-      // Enfocar el campo de contraseña después de cambiar el tipo
+      
       passwordField.focus();
     });
   });
 }
 
-// Inicializar cuando el DOM esté listo
+
 document.addEventListener('DOMContentLoaded', () => {
   initPasswordToggle();
   
-  // También inicializar después de cambiar entre formularios
+  
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -278,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Observar cambios en los formularios
+  
   document.querySelectorAll('.auth-form').forEach(form => {
     observer.observe(form, { attributes: true });
   });

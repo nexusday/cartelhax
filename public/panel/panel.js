@@ -699,9 +699,95 @@ function renderLinks(links) {
       const createdAt = link.createdAt ? new Date(link.createdAt).toLocaleString() : "fecha desconocida";
       meta.textContent = `Publicado por ${link.createdBy} · ${createdAt}`;
 
-      const description = document.createElement("p");
+      
+      const description = document.createElement("div");
       description.className = "status";
-      description.textContent = link.description || "Sin descripción.";
+      description.style.whiteSpace = 'pre-line'; 
+      
+      const maxLength = 120; 
+      const fullText = link.description || "";
+      let isExpanded = false;
+      
+      
+      const updateText = () => {
+    
+        description.innerHTML = '';
+        
+        
+        if (!fullText || fullText.trim() === '') {
+          const noDesc = document.createElement('span');
+          noDesc.textContent = 'Sin descripción.';
+          noDesc.style.color = 'var(--muted)';
+          description.appendChild(noDesc);
+          return;
+        }
+        
+        
+        const textSpan = document.createElement('span');
+        
+        if (fullText.length <= maxLength || isExpanded) {
+          
+          textSpan.innerHTML = fullText.replace(/\n/g, '<br>');
+          description.appendChild(textSpan);
+          
+          
+          if (fullText.length > maxLength) {
+            const toggleBtn = document.createElement('a');
+            toggleBtn.href = '#';
+            toggleBtn.textContent = ' ▼ Ver menos';
+            toggleBtn.style.color = '#4fc3f7';
+            toggleBtn.style.textDecoration = 'underline';
+            toggleBtn.style.fontSize = '0.9em';
+            toggleBtn.style.marginLeft = '6px';
+            toggleBtn.style.fontWeight = '600';
+            toggleBtn.style.transition = 'all 0.2s ease';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.style.whiteSpace = 'nowrap';
+            toggleBtn.onmouseover = () => toggleBtn.style.opacity = '0.8';
+            toggleBtn.onmouseout = () => toggleBtn.style.opacity = '1';
+            toggleBtn.onclick = (e) => {
+              e.preventDefault();
+              isExpanded = false;
+              updateText();
+            };
+            description.appendChild(document.createElement('br'));
+            description.appendChild(toggleBtn);
+          }
+        } else {
+          
+          const truncated = fullText.substring(0, maxLength);
+          const lastSpace = truncated.lastIndexOf(' ');
+          const finalText = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
+          
+          textSpan.innerHTML = finalText + '...';
+          description.appendChild(textSpan);
+          
+          
+          const toggleBtn = document.createElement('a');
+          toggleBtn.href = '#';
+          toggleBtn.textContent = ' ▶ Ver más';
+          toggleBtn.style.color = '#4fc3f7';
+          toggleBtn.style.textDecoration = 'underline';
+          toggleBtn.style.fontSize = '0.9em';
+          toggleBtn.style.marginLeft = '6px';
+          toggleBtn.style.fontWeight = '600';
+          toggleBtn.style.transition = 'all 0.2s ease';
+          toggleBtn.style.cursor = 'pointer';
+          toggleBtn.style.whiteSpace = 'nowrap';
+          toggleBtn.onmouseover = () => toggleBtn.style.opacity = '0.8';
+          toggleBtn.onmouseout = () => toggleBtn.style.opacity = '1';
+          toggleBtn.onclick = (e) => {
+            e.preventDefault();
+            isExpanded = true;
+            updateText();
+          };
+          description.appendChild(document.createElement('br'));
+          description.appendChild(toggleBtn);
+        }
+      };
+      
+    
+      updateText();
 
       const actions = document.createElement("div");
       actions.className = "controls";

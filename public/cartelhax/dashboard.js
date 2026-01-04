@@ -166,13 +166,66 @@ function renderLinks(totalCount, visibleLinks) {
       statusBadge.textContent = link.status === "offline" ? "OFFLINE" : "ONLINE";
       header.append(title, badge, statusBadge);
 
-      const description = document.createElement("p");
+      const description = document.createElement("div");
       description.className = "link-description";
-      description.textContent = link.description || "Sin descripción";
+      const maxLength = 120; 
+      const fullText = link.description || "Sin descripción";
+      let isExpanded = false;
+      
+      
+      const updateText = () => {
+        if (fullText.length <= maxLength || isExpanded) {
+          description.innerHTML = fullText.replace(/\n/g, '<br>');
+          if (fullText.length > maxLength) {
+            const toggleBtn = document.createElement('a');
+            toggleBtn.href = '#';
+            toggleBtn.textContent = ' ▼ Ver menos';
+            toggleBtn.style.color = '#4fc3f7';
+            toggleBtn.style.textDecoration = 'underline';
+            toggleBtn.style.fontSize = '0.9em';
+            toggleBtn.style.marginLeft = '6px';
+            toggleBtn.style.fontWeight = '600';
+            toggleBtn.style.transition = 'all 0.2s ease';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.onmouseover = () => toggleBtn.style.opacity = '0.8';
+            toggleBtn.onmouseout = () => toggleBtn.style.opacity = '1';
+            toggleBtn.onclick = (e) => {
+              e.preventDefault();
+              isExpanded = false;
+              updateText();
+            };
+            description.appendChild(toggleBtn);
+          }
+        } else {
+          const truncated = fullText.substring(0, maxLength) + '...';
+          description.innerHTML = truncated.replace(/\n/g, '<br>');
+          const toggleBtn = document.createElement('a');
+          toggleBtn.href = '#';
+          toggleBtn.textContent = ' ▶ Ver más';
+          toggleBtn.style.color = '#4fc3f7';
+          toggleBtn.style.textDecoration = 'underline';
+          toggleBtn.style.fontSize = '0.9em';
+          toggleBtn.style.marginLeft = '6px';
+          toggleBtn.style.fontWeight = '600';
+          toggleBtn.style.transition = 'all 0.2s ease';
+          toggleBtn.style.cursor = 'pointer';
+          toggleBtn.onmouseover = () => toggleBtn.style.opacity = '0.8';
+          toggleBtn.onmouseout = () => toggleBtn.style.opacity = '1';
+          toggleBtn.onclick = (e) => {
+            e.preventDefault();
+            isExpanded = true;
+            updateText();
+          };
+          description.appendChild(toggleBtn);
+        }
+      };
+      
+      updateText();
       description.style.margin = "8px 0";
       description.style.color = "var(--muted)";
       description.style.fontSize = "0.95em";
-      description.style.lineHeight = "1.4";
+      description.style.lineHeight = "1.6";
+      description.style.wordBreak = "break-word";
 
       const meta = document.createElement("p");
       meta.className = "status";

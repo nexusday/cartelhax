@@ -235,6 +235,94 @@ function renderLinks(links) {
       urlButton.textContent = "Entrar";
       urlButton.className = "link-button";
 
+      
+      const description = document.createElement("div");
+      description.className = "link-description";
+      const maxLength = 100; 
+      const fullText = link.description || "";
+      let isExpanded = false;
+      
+      
+      const updateText = () => {
+        
+        description.innerHTML = '';
+        
+        
+        if (!fullText || fullText.trim() === '') {
+          return;
+        }
+        
+        
+        const textSpan = document.createElement('span');
+        
+        if (fullText.length <= maxLength || isExpanded) {
+          
+          textSpan.innerHTML = fullText.replace(/\n/g, '<br>');
+          description.appendChild(textSpan);
+          
+          
+          if (fullText.length > maxLength) {
+            const toggleBtn = document.createElement('a');
+            toggleBtn.href = '#';
+            toggleBtn.textContent = ' ▼ Ver menos';
+            toggleBtn.style.color = '#4fc3f7';
+            toggleBtn.style.textDecoration = 'underline';
+            toggleBtn.style.fontSize = '0.9em';
+            toggleBtn.style.marginLeft = '6px';
+            toggleBtn.style.fontWeight = '600';
+            toggleBtn.style.transition = 'all 0.2s ease';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.style.whiteSpace = 'nowrap';
+            toggleBtn.onmouseover = () => toggleBtn.style.opacity = '0.8';
+            toggleBtn.onmouseout = () => toggleBtn.style.opacity = '1';
+            toggleBtn.onclick = (e) => {
+              e.preventDefault();
+              isExpanded = false;
+              updateText();
+            };
+            description.appendChild(document.createElement('br'));
+            description.appendChild(toggleBtn);
+          }
+        } else {
+          
+          const truncated = fullText.substring(0, maxLength);
+          const lastSpace = truncated.lastIndexOf(' ');
+          const finalText = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
+          
+          textSpan.innerHTML = finalText + '...';
+          description.appendChild(textSpan);
+          
+          
+          const toggleBtn = document.createElement('a');
+          toggleBtn.href = '#';
+          toggleBtn.textContent = ' ▶ Ver más';
+          toggleBtn.style.color = '#4fc3f7';
+          toggleBtn.style.textDecoration = 'underline';
+          toggleBtn.style.fontSize = '0.9em';
+          toggleBtn.style.marginLeft = '6px';
+          toggleBtn.style.fontWeight = '600';
+          toggleBtn.style.transition = 'all 0.2s ease';
+          toggleBtn.style.cursor = 'pointer';
+          toggleBtn.style.whiteSpace = 'nowrap';
+          toggleBtn.onmouseover = () => toggleBtn.style.opacity = '0.8';
+          toggleBtn.onmouseout = () => toggleBtn.style.opacity = '1';
+          toggleBtn.onclick = (e) => {
+            e.preventDefault();
+            isExpanded = true;
+            updateText();
+          };
+          description.appendChild(document.createElement('br'));
+          description.appendChild(toggleBtn);
+        }
+      };
+      
+      updateText();
+      description.style.margin = "8px 0";
+      description.style.color = "var(--muted)";
+      description.style.fontSize = "0.95em";
+      description.style.lineHeight = "1.6";
+      description.style.wordBreak = "break-word";
+
       const meta = document.createElement("p");
       meta.className = "status";
       meta.textContent = `Publicado por ${link.createdBy} · ${new Date(link.createdAt).toLocaleString()}`;
@@ -249,7 +337,7 @@ function renderLinks(links) {
 
       actions.appendChild(deleteBtn);
 
-      card.append(header, urlButton, meta, actions);
+      card.append(header, urlButton, description, meta, actions);
       linksList.appendChild(card);
     });
 }
